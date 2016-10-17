@@ -4,3 +4,4 @@ npm-debug.log*
 config.json
 
 website/build.js
+bootstrap.css

@@ -3,11 +3,13 @@ const passport = require('passport');
 const Strategy = require('passport-google-oauth20').Strategy;
 const config = require('./config.json');
 
+const database = require('./database');
+
 // Configure Passport
 passport.use(new Strategy({
   clientID: config.CLIENT_ID,
   clientSecret: config.CLIENT_SECRET,
-  callbackURL: 'http://localhost:3000/login/google/return'
+  callbackURL: '/login/google/return'
 }, (accessToken, refreshToken, profile, cb) => {
   //
   // DO STUFF WITH DATABASE HERE?
@@ -42,9 +44,15 @@ app.get('/',
   }
 );
 
+app.get('/bootstrap.css',
+  (req, res) => {
+    res.sendFile(__dirname + '/website/bootstrap.css');
+  }
+);
+
 app.get('/build.js',
   (req, res) => {
-    res.sendFile(__dirname + '/website/build.js')
+    res.sendFile(__dirname + '/website/build.js');
   }
 );
 
@@ -80,6 +88,48 @@ app.get('/profile',
     } else {
       res.status(401).send('Unauthorized: Please log in.');
     }
+  }
+);
+
+// The cool stuff
+app.get('/api/logs',
+  (req, res) => {
+    if (req.user) {
+      database.getAllLogs(req.user.id, (err, logs) => {
+        if (err) {
+          res.status(500).set('Uh oh... Something went wrong!');
+        } else {
+          res.setHeader('Content-Type', 'application/json');
+          res.send(JSON.stringify({logs: logs}, null, 2));
+        }
+      });
+    } else {
+      res.status(401).send('Unauthorized: Please log in.');
+    }
+  }
+);
+
+app.post('/api/createLog',
+  (req, res) => {
+    if (req.user) {
+      database.createNewLog(req.user.id, req.body.examinee, (err) => {
+        if (err) {
+          res.status(500).set('Uh oh... Something went wrong!');
+        } else {
+          res.send('Success');
+        }
+      });
+    } else {
+      res.status(401).send('Unauthorized: Please log in.');
+    }
+  }
+);
+
+// Catch-all for ReactRouter
+app.get('*',
+  require('connect-ensure-login').ensureLoggedIn('/login'),
+  (req, res) => {
+    res.sendFile(__dirname + '/website/index.html');
   }
 );
 
