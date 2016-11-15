@@ -1,7 +1,9 @@
+const _ = require('lodash');
 const React = require('react');
 const ReactBootstrap = require('react-bootstrap');
 const request = require('request');
 const ReactRouter = require('react-router');
+const shortId = require('shortid');
 
 const Link = ReactRouter.Link;
 
@@ -14,78 +16,57 @@ const FormControl = ReactBootstrap.FormControl;
 const Button = ReactBootstrap.Button;
 
 const SelectExaminee = React.createClass({
-  makeQuery() {
-    request({url: `${window.location.origin}/api/logs`}, (err, res, body) => {
-      if (err) {
-        console.log('Error receiving list of examinees:');
-        console.log(err);
-        this.setState({hasError: err});
-      } else {
-        let logs = JSON.parse(body);
-        console.log('Received list of examinees:');
-        console.log(logs);
-        this.setState({logs: logs.logs});
-      }
-    });
-  },
-
   getInitialState() {
     return {
-      hasError: false,
-      logs: undefined,
       examineeName: ''
     };
-  },
-  componentDidMount() {
-    this.makeQuery();
   },
 
   handleExamineeNameChange(event) {
     this.setState({examineeName: event.target.value});
   },
+  handleOnKeyPress(event) {
+    if (event.key === 'Enter')
+      this.handleAddExaminee();
+  },
   handleAddExaminee() {
+    let updatedExaminees = this.props.profile.examinees.slice();
+    updatedExaminees.push({
+      id: shortId.generate(),
+      examineeName: this.state.examineeName,
+      examineeLogs: []
+    });
+
     request({
       method: 'POST',
-      url: `${window.location.origin}/api/createLog`,
-      form: {examinee: this.state.examineeName}
+      url: `${window.location.origin}/api/updateProfile`,
+      form: {updatedExaminees: updatedExaminees}
     }, () => {
+      console.log('Updated stuff')
       console.log(arguments);
       this.setState({
-        hasError: false,
-        logs: undefined
+        examineeName: ''
       });
-      this.makeQuery();
+      this.props.refresh();
     });
   },
 
   render() {
-    if (this.state.hasError)
-      return (
-        <div>
-          <h3>Your examinees:</h3>
-          <p>An error occurred when fetching the list of examinees. Please try refreshing the page.</p>
-        </div>
-      );
-
-    if (!this.state.logs)
-      return (
-        <div>
-          <h3>Your examinees:</h3>
-          <p>Fetching list...</p>
-        </div>
-      );
-
     // Render child route if applicable
     if (this.props.children) {
       return React.cloneElement(React.Children.only(this.props.children), {
-        logs: this.state.logs
+        account: this.props.account,
+        profile: this.props.profile,
+        refresh: this.props.refresh
       });
     }
+
+    let examinees = this.props.profile.examinees;
 
     return (
       <div>
         <h3>Your Examinees</h3>
-        {this.state.logs.length === 0 ? <p>Your list is empty!</p> :
+        {examinees.length === 0 ? <p>Your list is empty!</p> :
           <Table striped>
             <thead>
               <tr>
@@ -95,10 +76,10 @@ const SelectExaminee = React.createClass({
               </tr>
             </thead>
             <tbody>
-              {this.state.logs.map((log) => {
+              {examinees.map((examinee) => {
                 return (
-                  <tr key={log._id}>
-                    <td><Link to={`/examinees/${log._id}`}>{log.examineeName}</Link></td>
+                  <tr key={examinee.id}>
+                    <td><Link to={`/examinees/${examinee.id}`}>{examinee.examineeName}</Link></td>
                     <td></td>
                     <td></td>
                   </tr>
@@ -107,18 +88,15 @@ const SelectExaminee = React.createClass({
             </tbody>
           </Table>}
         <h3>Add New Examinee</h3>
-        <Form>
-          <FormGroup controlId="examineeName">
-            <ControlLabel>Name</ControlLabel>
-            <FormControl
-              type="text"
-              placeholder="Examinee Name"
-              value={this.state.examineeName}
-              onChange={this.handleExamineeNameChange}
-            />
-          </FormGroup>
-          <Button onClick={this.handleAddExaminee}>Add Examinee</Button>
-        </Form>
+        <input className="form-control"
+          type="text"
+          placeholder="Examinee Name"
+          value={this.state.examineeName}
+          onChange={this.handleExamineeNameChange}
+          onKeyPress={this.handleOnKeyPress}
+        />
+        <br/>
+        <Button onClick={this.handleAddExaminee}>Add Examinee</Button>
       </div>
     );
   }

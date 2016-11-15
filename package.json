@@ -17,8 +17,8 @@
   },
   "main": "index.js",
   "scripts": {
-    "watchify": "watchify website/index.jsx -t [ babelify --presets [ es2015 react ] ] -o website/build.js",
-    "setup": "node setup"
+    "watchify": "watchify website/index.jsx -v -t [ babelify --presets [ es2015 react ] ] -o website/build.js",
+    "setup": "npm install && node setup && browserify website/index.jsx -t [ babelify --presets [ es2015 react ] ] -o website/build.js"
   },
   "dependencies": {
     "babel-preset-es2015": "^6.16.0",
@@ -30,7 +30,9 @@
     "express": "^4.13.1",
     "express-session": "^1.11.3",
     "jsonfile": "^2.4.0",
+    "lodash": "^4.16.4",
     "mongoose": "^4.6.3",
+    "mongoose-findorcreate": "^0.1.2",
     "morgan": "^1.6.1",
     "passport": "^0.2.2",
     "passport-google-oauth20": "^1.0.0",
@@ -40,6 +42,7 @@
     "react-dom": "^15.3.2",
     "react-router": "^2.8.1",
     "request": "^2.75.0",
+    "shortid": "^2.2.6",
     "uuid": "^2.0.3"
   },
   "devDependencies": {

@@ -1,3 +1,5 @@
+const path = require('path');
+
 const express = require('express');
 const passport = require('passport');
 const Strategy = require('passport-google-oauth20').Strategy;
@@ -17,13 +19,15 @@ passport.use(new Strategy({
   return cb(null, profile);
 }));
 
+
+
 passport.serializeUser((user, cb) => { cb(null, user); });
 passport.deserializeUser((obj, cb) => { cb(null, obj); });
 
 // Configure Application
 const app = express();
 
-app.set('views', __dirname + '/views');
+app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'ejs');
 
 app.use(require('cookie-parser')());
@@ -40,25 +44,25 @@ app.use(passport.session());
 app.get('/',
   require('connect-ensure-login').ensureLoggedIn('/login'),
   (req, res) => {
-    res.sendFile(__dirname + '/website/index.html');
+    res.sendFile(path.join(__dirname, '/website/index.html'));
   }
 );
 
 app.get('/bootstrap.css',
   (req, res) => {
-    res.sendFile(__dirname + '/website/bootstrap.css');
+    res.sendFile(path.join(__dirname, '/website/bootstrap.css'));
   }
 );
 
 app.get('/build.js',
   (req, res) => {
-    res.sendFile(__dirname + '/website/build.js');
+    res.sendFile(path.join(__dirname, '/website/build.js'));
   }
 );
 
 app.get('/login',
   (req, res) => {
-    res.sendFile(__dirname + '/website/login.html');
+    res.sendFile(path.join(__dirname, '/website/login.html'));
   }
 );
 
@@ -80,27 +84,19 @@ app.get('/logout',
   }
 );
 
-app.get('/profile',
+// The cool REST stuff
+app.get('/api/profile',
   (req, res) => {
     if (req.user) {
-      res.setHeader('Content-Type', 'application/json');
-      res.send(JSON.stringify({user: req.user}, null, 2));
-    } else {
-      res.status(401).send('Unauthorized: Please log in.');
-    }
-  }
-);
-
-// The cool stuff
-app.get('/api/logs',
-  (req, res) => {
-    if (req.user) {
-      database.getAllLogs(req.user.id, (err, logs) => {
+      database.getUserProfile(req.user.id, (err, profile) => {
         if (err) {
           res.status(500).set('Uh oh... Something went wrong!');
         } else {
           res.setHeader('Content-Type', 'application/json');
-          res.send(JSON.stringify({logs: logs}, null, 2));
+          res.send(JSON.stringify({
+            account: req.user,
+            profile: profile
+          }, null, 2));
         }
       });
     } else {
@@ -109,10 +105,10 @@ app.get('/api/logs',
   }
 );
 
-app.post('/api/createLog',
+app.post('/api/updateProfile',
   (req, res) => {
     if (req.user) {
-      database.createNewLog(req.user.id, req.body.examinee, (err) => {
+      database.updateUserProfile(req.user.id, req.body.updatedExaminees, (err) => {
         if (err) {
           res.status(500).set('Uh oh... Something went wrong!');
         } else {
@@ -129,7 +125,7 @@ app.post('/api/createLog',
 app.get('*',
   require('connect-ensure-login').ensureLoggedIn('/login'),
   (req, res) => {
-    res.sendFile(__dirname + '/website/index.html');
+    res.sendFile(path.join(__dirname, '/website/index.html'));
   }
 );
 

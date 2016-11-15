@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const React = require('react');
 const ReactDOM = require('react-dom');
 const ReactRouter = require('react-router');
@@ -21,54 +22,102 @@ const Examinee = require('./Examinee.jsx');
 const App = React.createClass({
   getInitialState() {
     return {
+      isLoading: true,
       hasError: false,
-      userProfile: undefined
+      account: undefined,
+      profile: undefined
     };
   },
   componentDidMount() {
-    request({url: `${window.location.origin}/profile`}, (err, res, body) => {
+    request({url: `${window.location.origin}/api/profile`}, (err, res, body) => {
       if (err) {
         console.log('Error fetching user profile:');
         console.log(err);
         this.setState({hasError: err});
       } else {
-        let profile = JSON.parse(body);
+        let data = JSON.parse(body);
         console.log('User profile fetched:');
-        console.log(profile);
-        this.setState({userProfile: profile});
+        console.log(data);
+        this.setState({
+          isLoading: false,
+          account: data.account,
+          profile: data.profile
+        });
       }
     });
   },
-  render() {
-    if (this.state.hasError) {
-      return <span>An error has occurred while fetching your profile. Please try reloading the page.</span>;
-    }
 
-    if (!this.state.userProfile) {
-      return <span>Loading...</span>;
+  refresh() {
+    this.setState({isLoading: true});
+    request({url: `${window.location.origin}/api/profile`}, (err, res, body) => {
+      if (err) {
+        console.log('Error fetching user profile:');
+        console.log(err);
+        this.setState({hasError: err});
+      } else {
+        let data = JSON.parse(body);
+        console.log('User profile fetched:');
+        console.log(data);
+        this.setState({
+          isLoading: false,
+          account: data.account,
+          profile: data.profile
+        });
+      }
+    });
+  },
+
+  render() {
+    if (this.state.hasError || (!this.state.isLoading && (!this.state.account || !this.state.profile))) {
+      return <span>An error has occurred while fetching your profile. Please try reloading the page.</span>;
     }
 
     return (
       <div>
-        <Navbar>
-          <Navbar.Header>
-            <Navbar.Brand>
-              Hello, {this.state.userProfile.user._json.displayName}!
-            </Navbar.Brand>
-          </Navbar.Header>
-          <Nav pullRight>
-            <NavItem href="/logout">Log out</NavItem>
-          </Nav>
-        </Navbar>
-        <Grid>
-          <Row>
-            <Col xs={12}>{this.props.children}</Col>
-          </Row>
-        </Grid>
+        {this.state.isLoading && <Loader/>}
+        {this.state.account && this.state.profile &&
+          <div>
+            <Navbar>
+              <Navbar.Header>
+                <Navbar.Brand>
+                  Hello, {this.state.account._json.displayName}!
+                </Navbar.Brand>
+              </Navbar.Header>
+              <Nav pullRight>
+                <NavItem href="/logout">Log out</NavItem>
+              </Nav>
+            </Navbar>
+            <Grid>
+              <Row>
+                <Col xs={12}>
+                  {React.cloneElement(React.Children.only(this.props.children), {
+                    account: this.state.account,
+                    profile: this.state.profile,
+                    refresh: this.refresh
+                  })}
+                </Col>
+              </Row>
+            </Grid>
+            <div style={{paddingBottom: '100px'}}/>
+          </div>}
       </div>
     );
   }
 });
+
+const Loader = React.createClass({
+  render() {
+    return (
+      <div style={{
+        zIndex: '9001',
+        position: 'fixed',
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(180,180,180,.5)'
+      }}>Loading</div>
+    );
+  }
+})
 
 const NoMatch = React.createClass({
   render() {
