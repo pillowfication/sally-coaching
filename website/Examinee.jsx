@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const React = require('react');
 const ReactBootstrap = require('react-bootstrap');
 
@@ -6,94 +7,56 @@ const Col = ReactBootstrap.Col;
 const Checkbox = ReactBootstrap.Checkbox;
 const Table = ReactBootstrap.Table;
 
+const Log = require('./Log.jsx');
+
 const Examinee = React.createClass({
   render() {
+    if (this.props.children) {
+      const logDate = this.props.params.logDate;
+      const log = _.findBy(this.props.examinee.examineeLogs, {logDate: logDate});
+
+      if (!log)
+        return (
+          <div>
+            <h3>{this.props.examinee.examineeName}</h3>
+            <br/>
+            <h3>Log {logDate} not found!</h3>
+          </div>
+        );
+
+      return (
+        <div>
+          <h3>{this.props.examinee.examineeName}</h3>
+          <br/>
+          {React.cloneElement(React.Children.only(this.props.children), _.assign(
+            {},
+            this.props,
+            {examinee: this.props.examinee}
+          ))}
+        </div>
+      );
+    }
+
+    console.log('Create Blank Log', this.props);
+    let blankLog = {
+      logDate: Date.now(),
+      lessonObservation: false,
+      rolePlayOrModelling: false,
+      discussedCoreIssue: false,
+      identifiedActionStepToAddressCoreIssue: false,
+      developedFutureLessonPlan: false,
+      dataScrutiny: false,
+      bookScrutiny: false,
+      reviewedLessonPlan: false,
+      other: '',
+      goalChanges: [],
+      actionSteps: []
+    }
     return (
       <div>
-        <h3>Placeholder page for {this.props.examinee.examineeName}</h3>
-        <Loggy {...this.props}/>
-      </div>
-    );
-  }
-});
-
-const Loggy = React.createClass({
-  render() {
-    // let goals = {};
-    // this.props.examinee.examineeLogs.forEach((log) => {
-    //   log.goalChanges.forEach((change) => {
-    //     let goal = goals[change.goalName] || (goals[change.goalName] = {});
-    //     goal[log.logDate] = change.goalChange;
-    //   });
-    // });
-
-    return (
-      <div>
-        <ol>
-          {/* Question 1 */}
-          <li style={{paddingBottom: '1em'}}>
-            <b>Name</b><br/>
-            {this.props.account._json.displayName}
-          </li>
-
-          {/* Question 2 */}
-          <li style={{paddingBottom: '1em'}}>
-            <b>Teacher met with</b><br/>
-            {this.props.examinee.examineeName}
-          </li>
-
-          {/* Question 3 */}
-          <li style={{paddingBottom: '1em'}}>
-            <b>Which of the following activities took place during the meeting?</b>
-            &nbsp;Choose ALL that apply<br/>
-            <Row>
-              <Col sm={6}>
-                <Checkbox>Lesson observation</Checkbox>
-                <Checkbox>Role play or modelling</Checkbox>
-                <Checkbox>Discussed core issue</Checkbox>
-                <Checkbox>Identified action step to address core issue</Checkbox>
-              </Col>
-              <Col sm={6}>
-                <Checkbox>Developed future lesson plan</Checkbox>
-                <Checkbox>Data scrutiny</Checkbox>
-                <Checkbox>Book scrutiny</Checkbox>
-                <Checkbox>Reviewed lesson plan</Checkbox>
-              </Col>
-            </Row>
-            <div>
-              Other: <input type="text" className="form-control"></input>
-            </div>
-          </li>
-
-          {/* Question 4 */}
-          <li style={{paddingBottom: '1em'}}>
-            <b>How has the teacher progressed on their key goals?</b><br/>
-            <Table>
-              <thead>
-                <tr>
-                  <th rowSpan="2">Name of goal</th>
-                  <th rowSpan="2">Direction of change since last meeting</th>
-                  <th colSpan="5" style={{textAlign: 'center'}}>History against goal</th>
-                </tr>
-                <tr>
-                  <th>01/01</th>
-                  <th>08/01</th>
-                  <th>15/01</th>
-                  <th>22/01</th>
-                  <th>29/01</th>
-                </tr>
-              </thead>
-              <tbody>
-
-              </tbody>
-            </Table>
-          </li>
-
-          {/* Question 5 */}
-          <li style={{paddingBottom: '1em'}}>
-            <b>What action steps have been agreed?</b><br/>
-          </li>
-        </ol>
+        <h3>{this.props.examinee.examineeName}</h3>
+        <br/>
+        <Log {...this.props} isNew log={blankLog}/>
       </div>
     );
   }

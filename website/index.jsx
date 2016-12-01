@@ -18,6 +18,8 @@ const NavItem = ReactBootstrap.NavItem;
 
 const SelectExaminee = require('./SelectExaminee.jsx');
 const Examinee = require('./Examinee.jsx');
+const LogList = require('./LogList.jsx');
+const Log = require('./Log.jsx');
 
 const App = React.createClass({
   getInitialState() {
@@ -130,7 +132,10 @@ ReactDOM.render(
     <Route path="/" component={App}>
       <IndexRedirect to="/examinees"/>
       <Route path="examinees" component={SelectExaminee}>
-        <Route path=":examineeId" component={Examinee}/>
+        <Route path=":examineeId" component={Examinee}>
+          <Route path="logs" component={LogList}/>
+          <Route path="logs/:logDate" component={Log}/>
+        </Route>
       </Route>
       <Route path="*" component={NoMatch}/>
     </Route>
