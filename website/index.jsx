@@ -142,3 +142,32 @@ ReactDOM.render(
   </Router>,
   document.getElementById('content')
 );
+
+window.request = require('request');
+window.getProfile = () => {
+  request({url: `${window.location.origin}/api/profile`}, (err, res, body) => {
+    if (err) {
+      console.log('Error fetching user profile:');
+      console.log(err);
+    } else {
+      let data = JSON.parse(body);
+      console.log('User profile fetched:');
+      console.log(data);
+    }
+  });
+};
+window.updateExaminees = (body) => {
+  request({
+    method: 'POST',
+    url: `${window.location.origin}/api/updateProfile`,
+    json: {updatedExaminees: body}
+  }, (err, res) => {
+    if (err || res.statusCode !== 200) {
+      console.log('Error updating user profile:');
+      console.log(err);
+    } else {
+      console.log('Update successful!');
+      console.log(res);
+    }
+  });
+};

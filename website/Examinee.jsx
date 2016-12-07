@@ -1,4 +1,7 @@
 const _ = require('lodash');
+const moment = require('moment');
+const update = require('react-addons-update');
+const request = require('request');
 const React = require('react');
 const ReactBootstrap = require('react-bootstrap');
 
@@ -10,29 +13,84 @@ const Table = ReactBootstrap.Table;
 const Log = require('./Log.jsx');
 
 const Examinee = React.createClass({
+  saveLog(log, isNew) {
+    const examineeIndex = _.findIndex(this.props.profile.examinees, {
+      _id: this.props.examinee._id
+    });
+    if (examineeIndex === -1) {
+      console.log('SOMETHING IS REALLY BAD');
+      return;
+    }
+
+    let newExaminees;
+    if (isNew) {
+      newExaminees = update(this.props.profile, {
+        examinees: {[examineeIndex]: {examineeLogs: {$push: [log]}}}
+      });
+    } else {
+      const logIndex = _.findIndex(this.props.profile.examinees[examineeIndex].examineeLogs, {
+        logDate: log.logDate
+      });
+      newExaminees = update(this.props.profile, {
+        examinees: {[examineeIndex]: {examineeLogs: {[logIndex]: {$set: log}}}}
+      });
+    }
+
+    console.log('Updating profile with data:');
+    console.log(newExaminees);
+
+    request({
+      method: 'POST',
+      url: `${window.location.origin}/api/updateProfile`,
+      json: {updatedExaminees: newExaminees.examinees}
+    }, (err, res) => {
+      if (err) {
+        console.log('Error updating user profile:');
+        console.log(err);
+      } else {
+        console.log('Update successful!');
+      }
+    });
+  },
+
   render() {
     if (this.props.children) {
-      const logDate = this.props.params.logDate;
-      const log = _.findBy(this.props.examinee.examineeLogs, {logDate: logDate});
+      const logDate = +this.props.params.logDate;
 
-      if (!log)
+      // Display single (existing) log
+      if (logDate) {
+        const log = _.find(this.props.examinee.examineeLogs, {logDate: logDate});
+
+        if (!log)
+          return (
+            <div>
+              <h3>{this.props.examinee.examineeName}</h3>
+              <br/>
+              <h3>Log {moment(logDate).format('DD/MM/YYYY')} not found!</h3>
+            </div>
+          );
+
         return (
           <div>
             <h3>{this.props.examinee.examineeName}</h3>
             <br/>
-            <h3>Log {logDate} not found!</h3>
+            {React.cloneElement(React.Children.only(this.props.children), _.assign({},
+              this.props,
+              {
+                log: log,
+                onSaveLog: this.saveLog
+              }
+            ))}
           </div>
         );
+      }
 
+      // Display LogList
       return (
         <div>
           <h3>{this.props.examinee.examineeName}</h3>
           <br/>
-          {React.cloneElement(React.Children.only(this.props.children), _.assign(
-            {},
-            this.props,
-            {examinee: this.props.examinee}
-          ))}
+          {React.cloneElement(React.Children.only(this.props.children), this.props)}
         </div>
       );
     }
@@ -56,7 +114,7 @@ const Examinee = React.createClass({
       <div>
         <h3>{this.props.examinee.examineeName}</h3>
         <br/>
-        <Log {...this.props} isNew log={blankLog}/>
+        <Log {...this.props} isNew log={blankLog} onSaveLog={this.saveLog}/>
       </div>
     );
   }

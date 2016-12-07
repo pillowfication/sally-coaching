@@ -1,6 +1,7 @@
 const path = require('path');
 
 const express = require('express');
+const bodyParser = require('body-parser');
 const passport = require('passport');
 const Strategy = require('passport-google-oauth20').Strategy;
 const config = require('./config.json');
@@ -40,6 +41,8 @@ app.use(require('express-session')({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+app.use(bodyParser.json());
 
 app.get('/',
   require('connect-ensure-login').ensureLoggedIn('/login'),
@@ -88,6 +91,7 @@ app.get('/logout',
 app.get('/api/profile',
   (req, res) => {
     if (req.user) {
+      console.log(`Request for id:${req.user.id}`)
       database.getUserProfile(req.user.id, (err, profile) => {
         if (err) {
           res.status(500).set('Uh oh... Something went wrong!');
@@ -108,6 +112,8 @@ app.get('/api/profile',
 app.post('/api/updateProfile',
   (req, res) => {
     if (req.user) {
+      console.log('Request to update profile');
+      console.log(req.body);
       database.updateUserProfile(req.user.id, req.body.updatedExaminees, (err) => {
         if (err) {
           res.status(500).set('Uh oh... Something went wrong!');

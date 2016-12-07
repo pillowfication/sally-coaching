@@ -13,7 +13,7 @@ const Log = React.createClass({
   propTypes: {
     isNew: React.PropTypes.bool,
     log: React.PropTypes.object,
-    onLogChange: React.PropTypes.func.isRequired
+    onSaveLog: React.PropTypes.func.isRequired
   },
 
   getInitialState() {
@@ -28,11 +28,11 @@ const Log = React.createClass({
   },
 
   render() {
-    console.log('sdflj', this.state);
+    console.log('render Log.jsx', this.state);
     return (
       <div>
 
-        <h4>New Log for {moment(this.state.logDate).format('DD/MM/YYYY')}</h4>
+        <h4>{this.props.isNew ? 'New Log for' : 'Editing Log'} {moment(this.state.logDate).format('DD/MM/YYYY')}</h4>
         <br/>
 
         <ol>
@@ -101,7 +101,9 @@ const Log = React.createClass({
           </li>
 
           <br/>
-          <Button bsStyle="primary">Save Log</Button>
+          <Button bsStyle="primary" onClick={() => {
+              this.props.onSaveLog(this.state, this.props.isNew);
+            }}>Save Log</Button>
         </ol>
       </div>
     );
