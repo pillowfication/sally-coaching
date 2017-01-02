@@ -13,13 +13,13 @@ const Table = ReactBootstrap.Table;
 const Log = require('./Log.jsx');
 
 const Examinee = React.createClass({
-  saveLog(log, isNew) {
+  saveLog(log, isNew, cb) {
     const examineeIndex = _.findIndex(this.props.profile.examinees, {
       _id: this.props.examinee._id
     });
     if (examineeIndex === -1) {
       console.log('SOMETHING IS REALLY BAD');
-      return;
+      return cb('ERROR SAVING');
     }
 
     let newExaminees;
@@ -47,8 +47,10 @@ const Examinee = React.createClass({
       if (err) {
         console.log('Error updating user profile:');
         console.log(err);
+        return cb('ERROR SAVING');
       } else {
         console.log('Update successful!');
+        return cb('Saved!');
       }
     });
   },
@@ -96,6 +98,17 @@ const Examinee = React.createClass({
     }
 
     console.log('Create Blank Log', this.props);
+
+    let lastLog;
+    for (let log of this.props.examinee.examineeLogs) {
+      if (!lastLog || log.logDate > lastLog.logDate)
+        lastLog = log;
+    }
+    let goalChanges = lastLog ? lastLog.goalChanges.map(goal => ({
+      goalName: goal.goalName,
+      goalChange: 0
+    })) : [];
+
     let blankLog = {
       logDate: Date.now(),
       lessonObservation: false,
@@ -107,7 +120,7 @@ const Examinee = React.createClass({
       bookScrutiny: false,
       reviewedLessonPlan: false,
       other: '',
-      goalChanges: [],
+      goalChanges: goalChanges,
       actionSteps: []
     }
     return (

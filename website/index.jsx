@@ -86,6 +86,8 @@ const App = React.createClass({
                 </Navbar.Brand>
               </Navbar.Header>
               <Nav pullRight>
+                {this.props.params.examineeId &&
+                  <NavItem href={`/examinees/${this.props.params.examineeId}/logs`}>All Logs</NavItem>}
                 <NavItem href="/logout">Log out</NavItem>
               </Nav>
             </Navbar>
